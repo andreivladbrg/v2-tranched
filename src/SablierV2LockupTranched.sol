@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23;
 
-import {ISablierV2LockupTranched} from "./interfaces/ISablierV2LockupTranched.sol";
+import { ISablierV2LockupTranched } from "./interfaces/ISablierV2LockupTranched.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {UD60x18} from "@prb/math/src/UD60x18.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { UD60x18 } from "@prb/math/src/UD60x18.sol";
 
-import {SablierV2Lockup} from "@sablier/v2-core/src/abstracts/SablierV2Lockup.sol";
-import {ISablierV2Comptroller} from "@sablier/v2-core/src/interfaces/ISablierV2Comptroller.sol";
-import {ISablierV2Lockup} from "@sablier/v2-core/src/interfaces/ISablierV2Lockup.sol";
-import {ISablierV2NFTDescriptor} from "@sablier/v2-core/src/interfaces/ISablierV2NFTDescriptor.sol";
-import {ISablierV2LockupRecipient} from "@sablier/v2-core/src/interfaces/hooks/ISablierV2LockupRecipient.sol";
-import {Errors} from "@sablier/v2-core/src/libraries/Errors.sol";
-import {Helpers} from "@sablier/v2-core/src/libraries/Helpers.sol";
-import {Lockup} from "@sablier/v2-core/src/types/DataTypes.sol";
+import { SablierV2Lockup } from "@sablier/v2-core/src/abstracts/SablierV2Lockup.sol";
+import { ISablierV2Comptroller } from "@sablier/v2-core/src/interfaces/ISablierV2Comptroller.sol";
+import { ISablierV2Lockup } from "@sablier/v2-core/src/interfaces/ISablierV2Lockup.sol";
+import { ISablierV2NFTDescriptor } from "@sablier/v2-core/src/interfaces/ISablierV2NFTDescriptor.sol";
+import { ISablierV2LockupRecipient } from "@sablier/v2-core/src/interfaces/hooks/ISablierV2LockupRecipient.sol";
+import { Errors } from "@sablier/v2-core/src/libraries/Errors.sol";
+import { Helpers } from "@sablier/v2-core/src/libraries/Helpers.sol";
+import { Lockup } from "@sablier/v2-core/src/types/DataTypes.sol";
 
 /// @title SablierV2LockupTranched
 /// @notice See the documentation in {ISablierV2LockupTranched}.
@@ -29,7 +29,7 @@ contract SablierV2LockupTranched is
                                   PRIVATE STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
-    uint256 public constant MAX_TRANCHE_COUNT = 300;
+    uint256 public immutable MAX_TRANCHE_COUNT;
 
     /// @dev Sablier V2 Lockup Tranched streams mapped by unsigned integers.
     mapping(uint256 id => Stream stream) private _streams;
@@ -42,15 +42,18 @@ contract SablierV2LockupTranched is
     /// @param initialAdmin The address of the initial contract admin.
     /// @param initialComptroller The address of the initial comptroller.
     /// @param initialNFTDescriptor The address of the initial NFT descriptor.
+    /// @param maxTrancheCount The maximum number of tranches allowed per stream.
     constructor(
         address initialAdmin,
         ISablierV2Comptroller initialComptroller,
-        ISablierV2NFTDescriptor initialNFTDescriptor
+        ISablierV2NFTDescriptor initialNFTDescriptor,
+        uint256 maxTrancheCount
     )
         ERC721("Sablier V2 Lockup Tranched NFT", "SAB-V2-LOCKUP-LIN")
         SablierV2Lockup(initialAdmin, initialComptroller, initialNFTDescriptor)
     {
         nextStreamId = 1;
+        MAX_TRANCHE_COUNT = maxTrancheCount;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -328,13 +331,13 @@ contract SablierV2LockupTranched is
         IERC20 asset = _streams[streamId].asset;
 
         // Interactions: refund the sender.
-        asset.safeTransfer({to: sender, value: senderAmount});
+        asset.safeTransfer({ to: sender, value: senderAmount });
 
         // Log the cancellation.
         emit ISablierV2Lockup.CancelLockupStream(streamId, sender, recipient, asset, senderAmount, recipientAmount);
 
         // Emits an ERC-4906 event to trigger an update of the NFT metadata.
-        emit MetadataUpdate({_tokenId: streamId});
+        emit MetadataUpdate({ _tokenId: streamId });
 
         // Interactions: if the recipient is a contract, try to invoke the cancel hook on the recipient without
         // reverting if the hook is not implemented, and without bubbling up any potential revert.
@@ -344,7 +347,7 @@ contract SablierV2LockupTranched is
                 sender: sender,
                 senderAmount: senderAmount,
                 recipientAmount: recipientAmount
-            }) {} catch {}
+            }) { } catch { }
         }
     }
 
@@ -392,7 +395,7 @@ contract SablierV2LockupTranched is
         }
 
         // Effects: mint the NFT to the recipient.
-        _mint({to: params.recipient, tokenId: streamId});
+        _mint({ to: params.recipient, tokenId: streamId });
 
         // Interactions: transfer the deposit and the protocol fee.
         // Using unchecked arithmetic because the deposit and the protocol fee are bounded by the total amount.
@@ -406,7 +409,7 @@ contract SablierV2LockupTranched is
 
         // Interactions: pay the broker fee, if not zero.
         if (createAmounts.brokerFee > 0) {
-            params.asset.safeTransferFrom({from: msg.sender, to: params.broker.account, value: createAmounts.brokerFee});
+            params.asset.safeTransferFrom({ from: msg.sender, to: params.broker.account, value: createAmounts.brokerFee });
         }
 
         // Log the newly created stream.
@@ -430,7 +433,10 @@ contract SablierV2LockupTranched is
         Tranche[] memory tranches,
         uint256 maxTrancheCount,
         uint40 startTime
-    ) internal view {
+    )
+        internal
+        view
+    {
         // Checks: the deposit amount is not zero.
         if (depositAmount == 0) {
             revert Errors.SablierV2Lockup_DepositAmountZero();
@@ -527,7 +533,7 @@ contract SablierV2LockupTranched is
         IERC20 asset = _streams[streamId].asset;
 
         // Interactions: perform the ERC-20 transfer.
-        asset.safeTransfer({to: to, value: amount});
+        asset.safeTransfer({ to: to, value: amount });
 
         // Log the withdrawal.
         emit ISablierV2Lockup.WithdrawFromLockupStream(streamId, to, asset, amount);
