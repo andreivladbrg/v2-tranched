@@ -27,7 +27,6 @@ abstract contract Base_Test is Test {
     SablierV2LockupTranched internal lockupTranched;
 
     function setUp() public {
-        // Fork Ethereum Mainnet
         vm.createSelectFork({ urlOrAlias: "mainnet" });
 
         lockupTranched = new SablierV2LockupTranched(admin, comptroller, nftDescriptor, 300);
