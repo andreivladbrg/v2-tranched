@@ -50,24 +50,25 @@ abstract contract Base_Test is Test {
         return uint40(block.timestamp);
     }
 
-    uint40 internal cliffDuration = 2500 seconds;
-
     /*//////////////////////////////////////////////////////////////////////////
                                       TRANCHES
     //////////////////////////////////////////////////////////////////////////*/
 
     function getTranches(uint256 count) internal view returns (SablierV2LockupTranched.Tranche[] memory) {
         SablierV2LockupTranched.Tranche[] memory _tranches = new SablierV2LockupTranched.Tranche[](count);
+
+        uint40 stepDuration = 100 seconds;
         for (uint40 i = 0; i < count; ++i) {
             _tranches[i] = tranche();
-            _tranches[i].milestone += i;
+            _tranches[i].milestone += stepDuration;
+            stepDuration += 100; // increment it so that we will have tranches milestones in an ascending order
         }
         return _tranches;
     }
 
     function tranche() internal view returns (ISablierV2LockupTranched.Tranche memory) {
         ISablierV2LockupTranched.Tranche memory _tranche =
-            ISablierV2LockupTranched.Tranche({ amount: 10e18, milestone: _now() + cliffDuration });
+            ISablierV2LockupTranched.Tranche({ amount: 10e18, milestone: _now() });
         return _tranche;
     }
 
@@ -109,15 +110,16 @@ abstract contract Base_Test is Test {
 
     function getSegments(uint256 count) internal view returns (LockupDynamic.Segment[] memory) {
         LockupDynamic.Segment[] memory _segments = new LockupDynamic.Segment[](count);
+        uint40 stepDuration = 100 seconds;
         for (uint40 i = 0; i < count; ++i) {
             _segments[i] = segment();
-            _segments[i].milestone += i;
+            _segments[i].milestone += stepDuration;
+            stepDuration += 100; // increment it so that we will have segments milestones in an ascending order
         }
         return _segments;
     }
 
     function segment() internal view returns (LockupDynamic.Segment memory) {
-        return
-            LockupDynamic.Segment({ amount: 10e18, exponent: UD2x18.wrap(3.14e18), milestone: _now() + cliffDuration });
+        return LockupDynamic.Segment({ amount: 10e18, exponent: UD2x18.wrap(3.14e18), milestone: _now() });
     }
 }
