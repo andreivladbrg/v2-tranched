@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { UD2x18 } from "@prb/math/src/UD2x18.sol";
 import { ud } from "@prb/math/src/UD60x18.sol";
 import { SablierV2Comptroller } from "@sablier/v2-core/src/SablierV2Comptroller.sol";
@@ -19,21 +19,24 @@ abstract contract Base_Test is Test {
     address public sender;
     address public recipient;
 
-    IERC20 public constant dai = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);
-    SablierV2Comptroller internal comptroller = SablierV2Comptroller(0xC3Be6BffAeab7B297c03383B4254aa3Af2b9a5BA);
-    SablierV2NFTDescriptor internal nftDescriptor = SablierV2NFTDescriptor(0x23eD5DA55AF4286c0dE55fAcb414dEE2e317F4CB);
-    SablierV2LockupDynamic internal lockupDynamic = SablierV2LockupDynamic(0x7CC7e125d83A581ff438608490Cc0f7bDff79127);
+    SablierV2Comptroller internal comptroller;
+    SablierV2NFTDescriptor internal nftDescriptor;
 
+    ERC20 public dai;
+    SablierV2LockupDynamic internal lockupDynamic;
     SablierV2LockupTranched internal lockupTranched;
 
     function setUp() public {
-        vm.createSelectFork({ urlOrAlias: "mainnet" });
+        admin = makeAddr("admin");
+        sender = makeAddr("sender");
+        recipient = makeAddr("recipient");
 
+        dai = new ERC20("Dai Stablecoin", "DAI");
+
+        comptroller = new SablierV2Comptroller(admin);
+        nftDescriptor = new SablierV2NFTDescriptor();
+        lockupDynamic = new SablierV2LockupDynamic(admin, comptroller, nftDescriptor, 300);
         lockupTranched = new SablierV2LockupTranched(admin, comptroller, nftDescriptor, 300);
-
-        admin = payable(makeAddr("admin"));
-        sender = payable(makeAddr("sender"));
-        recipient = payable(makeAddr("recipient"));
 
         vm.deal({ account: sender, newBalance: 1 ether });
         deal({ token: address(dai), to: sender, give: 1_000_000e18 });
