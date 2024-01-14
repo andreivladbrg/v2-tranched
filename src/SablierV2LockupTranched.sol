@@ -226,6 +226,18 @@ contract SablierV2LockupTranched is
     /// @dev Calculates the streamed amount without looking up the stream's status.
     function _calculateStreamedAmount(uint256 streamId) internal view returns (uint128) {
         uint40 currentTime = uint40(block.timestamp);
+
+        // If the start time is in the future, return zero.
+        if (_streams[streamId].startTime >= currentTime) {
+            return 0;
+        }
+
+        // If the end time is not in the future, return the deposited amount.
+        uint40 endTime = _streams[streamId].endTime;
+        if (endTime <= currentTime) {
+            return _streams[streamId].amounts.deposited;
+        }
+
         Tranche[] memory tranches = _streams[streamId].tranches;
 
         // Sum the amounts in all tranches that precede the current time.
