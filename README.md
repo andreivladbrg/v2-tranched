@@ -6,8 +6,8 @@ See [here](https://github.com/sablier-labs/v2-core/issues/787) for more details.
 
 ## Problem
 
-The problem with `SablierV2LockupDynamic` is that it needs to have two segments for one unlock, see how is the unlock in
-steps curve [from docs](https://docs.sablier.com/concepts/protocol/stream-types#unlock-in-steps) is implemented
+The problem with `SablierV2LockupDynamic` is that it needs to have two segments for one unlock, see how is the
+[unlock in steps curve](https://docs.sablier.com/concepts/protocol/stream-types#unlock-in-steps) implemented
 [here](https://github.com/sablier-labs/examples/blob/b66f5c816b2573fe2325a9e62d4b25c3ce84787b/v2/core/LockupDynamicCurvesCreator.sol#L82-L123).
 
 For `SablierV2LockupTranched`, the above example, it would be implemented like this:
@@ -36,9 +36,9 @@ calculating the withdrawable amount.
 For the benchmarks, I have considered the following number of unlocks: _2, 4, 6, 12, 24, 36, 48, 60_. These numbers are
 intended to reflect real-world scenarios (can be viewed as months).
 
-If we were to compare the gas for the same length of segments/tranches, the difference would not be significant.
-However, as mentioned above, `LockupTranched` uses half the number of tranches for the same number of unlocks compared
-to `LockupDynamic`, so it is indeed more efficient.
+If we were to compare the gas for the same length of segments/tranches, the difference would not be that big. However,
+as mentioned above, `LockupTranched` uses half the number of tranches for the same number of unlocks compared to
+`LockupDynamic`, so it is indeed more efficient.
 
 ### Gas Improvements Per Unlock
 
