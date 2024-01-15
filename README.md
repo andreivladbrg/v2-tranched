@@ -25,17 +25,20 @@ For `SablierV2LockupTranched`, the above example, it would be implemented like t
     }
 ```
 
-**Note** that the tranche size in this case is half, leading to fewer storage variables and less arrays traversed when
+**Notice** that the tranche size in this case is half, leading to fewer storage variables and less arrays traversed when
 calculating the withdrawable amount.
 
 ## Benchmark
+
+**Note:** the benchmark tests can be found
+[here](https://github.com/andreivladbrg/v2-tranched/blob/main/test/Benchmarks.t.sol).
 
 For the benchmarks, I have considered the following number of unlocks: _2, 4, 6, 12, 24, 36, 48, 60_. These numbers are
 intended to reflect real-world scenarios (can be viewed as months).
 
 If we were to compare the gas for the same length of segments/tranches, the difference would not be significant.
 However, as mentioned above, `LockupTranched` uses half the number of tranches for the same number of unlocks compared
-to `LockupDynamic, so it is indeed more efficient.
+to `LockupDynamic`, so it is indeed more efficient.
 
 ### Gas Improvements Per Unlock
 
